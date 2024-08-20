@@ -1,3 +1,7 @@
+# parse_hive-rs
+
+解析hive sql获取用到的源表名
+
 # Tauri + Vanilla
 
 This template should help get you started developing with Tauri in vanilla HTML, CSS and Javascript.
