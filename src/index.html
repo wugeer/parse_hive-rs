@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tauri Demo</title>
+  <style>
+    /* 设置 body 的 margin 和 padding 为 0 使其紧贴窗口 */
+    body {
+      margin: 0;
+      padding: 20px;
+      box-sizing: border-box;
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+    }
+    label {
+      font-size: 24px; /* 设置字体大小为16px */
+    }
+
+
+    /* 用于布局的容器 */
+    .container {
+      display: flex;
+      flex-direction: column;
+      flex-grow: 1;
+    }
+
+    /* 使输入框和结果框随着页面大小变化 */
+    textarea {
+      width: 100%;
+      box-sizing: border-box;
+      margin-bottom: 10px;
+      padding: 10px;
+      resize: none;
+    }
+
+    /* 设置输入框高度为输出框的4倍 */
+    #input-text {
+      flex-grow: 4;
+    }
+
+    #result-output {
+      flex-grow: 1;
+    }
+
+    /* 让输入框和输出框均占用父容器的剩余空间 */
+    .text-container {
+      display: flex;
+      flex-direction: column;
+      flex-grow: 1;
+    }
+
+    /* 按钮容器在同一行排列 */
+    .button-container {
+      display: flex;
+      justify-content: flex-start;
+      margin-top: 10px;
+    }
+
+    /* 按钮大小固定 */
+    button {
+      font-size: 24px;
+      width: 200px;
+      height: 50px;
+      margin-right: 10px;
+    }
+
+    /* 最后一个按钮的 margin-right 为 0 */
+    .button-container button:last-child {
+      margin-right: 0;
+    }
+  </style>
+</head>
+<body>
+  <h1>获取hive源表</h1>
+  <label for="input-text">输入sql:</label>
+  <div class="text-container">
+    <textarea id="input-text"></textarea>
+    <label for="file-upload">上传sql文件:</label>
+    <input type="file" id="file-upload"><br>
+    <div class="button-container">
+      <button id="execute-button">Execute</button>
+      <button id="clear-button">Clear File</button>
+    </div>
+    <label for="input-text">用到的表名:</label>
+    <textarea id="result-output" readonly></textarea>
+  </div>
+
+  <script>
+    const { invoke } = window.__TAURI__.tauri;
+    document.getElementById('execute-button').addEventListener('click', async () => {
+      const inputText = document.getElementById('input-text').value;
+      const fileUpload = document.getElementById('file-upload').files[0];
+
+      if (inputText) {
+        try {
+          const result = await invoke('gen_all_source_table', { input: inputText, file_content: null });
+          document.getElementById('result-output').value = result;
+        } catch (error) {
+          console.error("Error invoking Tauri command:", error);
+        }
+      } else if (fileUpload) {
+        const reader = new FileReader();
+
+        reader.onload = async () => {
+          const base64String = btoa(String.fromCharCode(...new Uint8Array(reader.result)));
+          console.log('File content array length:', base64String.length);
+
+          try {
+            const result = await invoke('gen_all_source_table', { input: "", fileContent: base64String });
+            document.getElementById('result-output').value = result;
+          } catch (error) {
+            console.error("Error invoking Tauri command:", error);
+          }
+        };
+
+        reader.readAsArrayBuffer(fileUpload);
+      } else {
+        document.getElementById('result-output').value = "No input provided";
+      }
+    });
+
+    // 清理按钮的点击事件
+    document.getElementById('clear-button').addEventListener('click', () => {
+      document.getElementById('file-upload').value = ''; // 清理文件输入框
+    });
+
+  </script>
+</body>
+</html>
